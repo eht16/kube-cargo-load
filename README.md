@@ -6,7 +6,7 @@ kube-cargo-load
 [![License](https://img.shields.io/pypi/l/kube-cargo-load.svg)](https://pypi.org/project/kube-cargo-load/)
 
 
-List PODs of a specific namespace or all namespaces with their
+List Kubernetes PODs of a specific namespace or all namespaces with their
 configured memory requests, limits and the current memory usage.
 
 
@@ -42,10 +42,22 @@ Example:
     Summary                                                   290.0 MB     490.0 MB     707.0 MB     144.29 %
 
 
-Installation
-------------
+Setup
+-----
 
-kube-cargo-load requires `Python 3.5` or newer and a working `kubectl` installation.
+### Requirements
+
+In order to use kube-cargo-load, you will need:
+
+- A Kubernetes cluster to connect to
+- Kubernetes Metrics Server must be installed and running in Kubernetes
+  (<https://github.com/kubernetes-sigs/metrics-server>)
+- kubectl (it must be configured for your Kubernetes cluster)
+- Python 3.6 or newer
+
+
+### Installation
+
 The easiest method is to install directly from pypi using pip:
 
     pip install kube-cargo-load
@@ -55,6 +67,9 @@ If you prefer, you can download kube-cargo-load and install it
 directly from source:
 
     python setup.py install
+
+
+### Download
 
 Alternatively, you can download just the script and execute it:
 
