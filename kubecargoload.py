@@ -74,7 +74,11 @@ class KubernetesCargoLoadOverviewProvider:
             command.append(self._namespace)
 
         try:
-            process = subprocess.run(command, capture_output=True, check=True)
+            process = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True)
         except subprocess.CalledProcessError as exc:
             print(exc.stderr.decode('utf-8'))
             raise
