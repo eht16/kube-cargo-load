@@ -9,7 +9,7 @@ from shutil import rmtree
 import sys
 
 NAME = 'kube-cargo-load'
-VERSION = '1.0'
+VERSION = '1.1'
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), 'rb') as f:

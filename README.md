@@ -104,9 +104,16 @@ The source code is available at https://github.com/eht16/kube-cargo-load/.
 ChangeLog
 ---------
 
-### 1.0.0 / 2020-04-12
+### 1.1 / 2020-04-15
 
-- Initial release
+    * Fix Python 3.6 compability (#1, Adrian Gajan)
+    * Improve docs
+    * Fix display units (KB -> Ki)
+    * Consider only PODs with configured limits in the summary
+
+### 1.0 / 2020-04-12
+
+    * Initial release
 
 
 Contributing
