@@ -314,7 +314,7 @@ class KubernetesCargoLoadOverviewPrinter:
         return tuple(elements)
 
     def _humanize_bytes(self, bytes_, precision=1):  # pylint: disable=no-self-use
-        suffixes = ['B', 'KB', 'MB', 'GB', 'TB']
+        suffixes = ['B', 'Ki', 'Mi', 'Gi', 'Ti']
         suffix_index = 0
         while bytes_ >= 1024:
             suffix_index += 1
