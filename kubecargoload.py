@@ -239,7 +239,7 @@ class KubernetesCargoLoadOverviewPrinter:
 
     def _determine_maximum_column_widths(self):
         max_namespace = 0
-        max_name = 0
+        max_name = 40
         for pod in self._overview.values():
             max_namespace = max(max_namespace, len(pod.namespace))
             max_name = max(max_name, len(pod.name))
@@ -277,8 +277,9 @@ class KubernetesCargoLoadOverviewPrinter:
         pods_sorted = sorted(self._overview.values(), key=self._get_sort_key_for_pod)
         for self._pod in pods_sorted:
             self._sums['memory_requests'] += self._pod.memory_requests
-            self._sums['memory_limits'] += self._pod.memory_limits
-            self._sums['memory_usage'] += self._pod.memory_usage
+            if self._pod.memory_limits:  # consider usage for summary only if limit is set
+                self._sums['memory_limits'] += self._pod.memory_limits
+                self._sums['memory_usage'] += self._pod.memory_usage
 
             print(
                 self._format_pattern.format(
@@ -340,7 +341,7 @@ class KubernetesCargoLoadOverviewPrinter:
     def _print_summary(self):
         print(self._format_pattern.format(
             'Summary',
-            '',
+            '(PODs without configured limits ignored)',
             self._humanize_bytes(self._sums['memory_requests']),
             self._humanize_bytes(self._sums['memory_limits']),
             self._humanize_bytes(self._sums['memory_usage']),

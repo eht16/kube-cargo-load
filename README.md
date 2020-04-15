@@ -25,21 +25,21 @@ Example:
     [15:09:58] enrico@host (0): ~% kubecargoload.py --all-namespaces
     Namespace   Name                                          Requests       Limits        Usage            %
     ----------------------------------------------------------------------------------------------------------
-    default     kube-web-view-7c67ddb647-pvjvs                100.0 MB     100.0 MB      29.0 MB      29.00 %
-    jitsi       jitsi-57d5888c88-vzrzl                          0.0  B       0.0  B     131.0 MB       0.00 %
-    kube-system coredns-66bff467f8-qn4pq                       70.0 MB     170.0 MB      16.0 MB       9.41 %
-    kube-system coredns-66bff467f8-znpxv                       70.0 MB     170.0 MB      13.0 MB       7.65 %
-    kube-system etcd-minikube                                   0.0  B       0.0  B      43.0 MB       0.00 %
-    kube-system kindnet-ptgnz                                  50.0 MB      50.0 MB      14.0 MB      28.00 %
-    kube-system kube-apiserver-minikube                         0.0  B       0.0  B     275.0 MB       0.00 %
-    kube-system kube-controller-manager-minikube                0.0  B       0.0  B      46.0 MB       0.00 %
-    kube-system kube-proxy-s7bl8                                0.0  B       0.0  B      20.0 MB       0.00 %
-    kube-system kube-scheduler-minikube                         0.0  B       0.0  B      20.0 MB       0.00 %
-    kube-system metrics-server-7bc6d75975-d6sgr                 0.0  B       0.0  B      12.0 MB       0.00 %
-    kube-system nginx-ingress-controller-6d57c87cb9-qpwh6       0.0  B       0.0  B      67.0 MB       0.00 %
-    kube-system storage-provisioner                             0.0  B       0.0  B      21.0 MB       0.00 %
+    default     kube-web-view-7c67ddb647-pvjvs                100.0 Mi     100.0 Mi      29.0 Mi      29.00 %
+    jitsi       jitsi-57d5888c88-vzrzl                          0.0  B       0.0  B     137.0 Mi       0.00 %
+    kube-system coredns-66bff467f8-qn4pq                       70.0 Mi     170.0 Mi      13.0 Mi       7.65 %
+    kube-system coredns-66bff467f8-znpxv                       70.0 Mi     170.0 Mi      11.0 Mi       6.47 %
+    kube-system etcd-minikube                                   0.0  B       0.0  B      58.0 Mi       0.00 %
+    kube-system kindnet-ptgnz                                  50.0 Mi      50.0 Mi      13.0 Mi      26.00 %
+    kube-system kube-apiserver-minikube                         0.0  B       0.0  B     257.0 Mi       0.00 %
+    kube-system kube-controller-manager-minikube                0.0  B       0.0  B      50.0 Mi       0.00 %
+    kube-system kube-proxy-s7bl8                                0.0  B       0.0  B      16.0 Mi       0.00 %
+    kube-system kube-scheduler-minikube                         0.0  B       0.0  B      19.0 Mi       0.00 %
+    kube-system metrics-server-7bc6d75975-d6sgr                 0.0  B       0.0  B      13.0 Mi       0.00 %
+    kube-system nginx-ingress-controller-6d57c87cb9-tgwwm       0.0  B       0.0  B       0.0  B       0.00 %
+    kube-system storage-provisioner                             0.0  B       0.0  B      15.0 Mi       0.00 %
     ----------------------------------------------------------------------------------------------------------
-    Summary                                                   290.0 MB     490.0 MB     707.0 MB     144.29 %
+    Summary     (PODs without configured limits ignored)      290.0 Mi     490.0 Mi      66.0 Mi      13.47 %
 
 
 Setup
