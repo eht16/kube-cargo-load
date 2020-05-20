@@ -6,7 +6,7 @@
 
 """
 List PODs of a specific namespace or all namespaces with their
-configured memory requests, limits and the current memory usage.
+configured memory or cpu requests, limits and the current memory or cpu usage.
 """
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
@@ -26,9 +26,10 @@ Pod = namedtuple('Pod', ('namespace', 'name', 'memory_limits', 'memory_requests'
 
 class KubernetesCargoLoadOverviewProvider:
 
-    def __init__(self, namespace, context=None):
+    def __init__(self, namespace, context=None, cpu=False):
         self._namespace = namespace
         self._context = context
+        self._cpu = cpu
         self._pod_memory_usage_data = dict()
         self._pods = dict()
         self._pod_data = None
@@ -43,13 +44,19 @@ class KubernetesCargoLoadOverviewProvider:
         top_pods_output = self._execute_kubectl_top_pods()
         for line in top_pods_output.splitlines():
             columns = line.strip().split()
-            if len(columns) > 3:
-                namespace, name, _, memory_usage_pretty = columns
+            if self._cpu:
+                if len(columns) > 3:
+                    namespace, name, usage_pretty, _ = columns
+                else:
+                    name, usage_pretty, _ = columns
+                    namespace = self._namespace
+            elif len(columns) > 3:
+                namespace, name, _, usage_pretty = columns
             else:
-                name, _, memory_usage_pretty = columns
+                name, _, usage_pretty = columns
                 namespace = self._namespace
 
-            memory_usage = self._parse_quantity(memory_usage_pretty)
+            memory_usage = self._parse_quantity(usage_pretty)
 
             pod_key = (namespace, name)
             self._pod_memory_usage_data[pod_key] = memory_usage
@@ -151,7 +158,7 @@ class KubernetesCargoLoadOverviewProvider:
             container_value = self._get_nested_pod_data_attribute(
                 'resources',
                 key,
-                'memory',
+                'memory' if self._cpu == False else 'cpu',
                 pod_data=container)
             if container_value is not None:
                 container_value_bytes = self._parse_quantity(container_value)
@@ -221,10 +228,11 @@ class KubernetesCargoLoadOverviewPrinter:
 
     _format_pattern = '{:{w_namespace}} {:{w_name}} {:>{w_requests}} {:>{w_limits}} {:>{w_usage}} {:>{w_ratio}}'
 
-    def __init__(self, overview, no_header=False, sort='namespace,name'):
+    def __init__(self, overview, no_header=False, sort='namespace,name', cpu=False):
         self._overview = overview
         self._no_header = no_header
         self._sort = sort
+        self._cpu = cpu
         self._column_widths = dict()
         self._pod = None
         self._sums = dict(memory_requests=0, memory_limits=0, memory_usage=0, memory_ratio=0)
@@ -315,6 +323,10 @@ class KubernetesCargoLoadOverviewPrinter:
         return tuple(elements)
 
     def _humanize_bytes(self, bytes_, precision=1):  # pylint: disable=no-self-use
+        if self._cpu:
+            bytes_ = bytes_ * 1000
+            return "{:.0f} m".format(bytes_)
+
         suffixes = ['B', 'Ki', 'Mi', 'Gi', 'Ti']
         suffix_index = 0
         while bytes_ >= 1024:
@@ -361,6 +373,14 @@ def _setup_options():
         dest='all_namespaces',
         action='store_true',
         help='list the requested object(s) across all namespaces',
+        default=False)
+
+    argument_parser.add_argument(
+        '-c',
+        '--cpu',
+        dest='cpu',
+        action='store_true',
+        help='show cpu instead of memory',
         default=False)
 
     argument_parser.add_argument(
@@ -419,10 +439,10 @@ def main():
     namespace = None if options.all_namespaces else options.namespace
 
     try:
-        overview_provider = KubernetesCargoLoadOverviewProvider(namespace, options.context)
+        overview_provider = KubernetesCargoLoadOverviewProvider(namespace, options.context, options.cpu)
         overview = overview_provider.provide()
 
-        printer = KubernetesCargoLoadOverviewPrinter(overview, options.no_header, options.sort)
+        printer = KubernetesCargoLoadOverviewPrinter(overview, options.no_header, options.sort, options.cpu)
         printer.print()
     except Exception as exc:  # pylint: disable=broad-except
         if options.debug:
