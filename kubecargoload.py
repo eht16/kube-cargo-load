@@ -6,7 +6,7 @@
 
 """
 List PODs of a specific namespace or all namespaces with their
-configured memory or cpu requests, limits and the current memory or cpu usage.
+configured memory requests, limits and the current memory usage.
 """
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
@@ -26,11 +26,11 @@ Pod = namedtuple('Pod', ('namespace', 'name', 'memory_limits', 'memory_requests'
 
 class KubernetesCargoLoadOverviewProvider:
 
-    def __init__(self, namespace, context=None, cpu=False):
+    def __init__(self, namespace, context=None, show_cpu_usage=False):
         self._namespace = namespace
         self._context = context
-        self._cpu = cpu
-        self._pod_memory_usage_data = dict()
+        self._show_cpu_usage = show_cpu_usage
+        self._pod_usage_data = dict()
         self._pods = dict()
         self._pod_data = None
 
@@ -44,22 +44,17 @@ class KubernetesCargoLoadOverviewProvider:
         top_pods_output = self._execute_kubectl_top_pods()
         for line in top_pods_output.splitlines():
             columns = line.strip().split()
-            if self._cpu:
-                if len(columns) > 3:
-                    namespace, name, usage_pretty, _ = columns
-                else:
-                    name, usage_pretty, _ = columns
-                    namespace = self._namespace
-            elif len(columns) > 3:
-                namespace, name, _, usage_pretty = columns
+            if len(columns) > 3:
+                namespace, name, cpu_usage_pretty, memory_usage_pretty = columns
             else:
-                name, _, usage_pretty = columns
+                name, cpu_usage_pretty, memory_usage_pretty = columns
                 namespace = self._namespace
 
-            memory_usage = self._parse_quantity(usage_pretty)
+            usage_pretty = cpu_usage_pretty if self._show_cpu_usage else memory_usage_pretty
+            usage = self._parse_quantity(usage_pretty)
 
             pod_key = (namespace, name)
-            self._pod_memory_usage_data[pod_key] = memory_usage
+            self._pod_usage_data[pod_key] = usage
 
     def _execute_kubectl_top_pods(self):
         return self._execute_kubectl('top', 'pods', '--no-headers=true')
@@ -129,7 +124,7 @@ class KubernetesCargoLoadOverviewProvider:
         memory_requests = self._get_resources('requests')
 
         pod_key = (namespace, name)
-        memory_usage = self._pod_memory_usage_data.get(pod_key, Decimal(0))
+        memory_usage = self._pod_usage_data.get(pod_key, Decimal(0))
 
         pod = Pod(
             namespace=namespace,
@@ -158,7 +153,7 @@ class KubernetesCargoLoadOverviewProvider:
             container_value = self._get_nested_pod_data_attribute(
                 'resources',
                 key,
-                'memory' if self._cpu == False else 'cpu',
+                'memory' if self._show_cpu_usage == False else 'cpu',
                 pod_data=container)
             if container_value is not None:
                 container_value_bytes = self._parse_quantity(container_value)
@@ -228,11 +223,11 @@ class KubernetesCargoLoadOverviewPrinter:
 
     _format_pattern = '{:{w_namespace}} {:{w_name}} {:>{w_requests}} {:>{w_limits}} {:>{w_usage}} {:>{w_ratio}}'
 
-    def __init__(self, overview, no_header=False, sort='namespace,name', cpu=False):
+    def __init__(self, overview, no_header=False, sort='namespace,name', show_cpu_usage=False):
         self._overview = overview
         self._no_header = no_header
         self._sort = sort
-        self._cpu = cpu
+        self._show_cpu_usage = show_cpu_usage
         self._column_widths = dict()
         self._pod = None
         self._sums = dict(memory_requests=0, memory_limits=0, memory_usage=0, memory_ratio=0)
@@ -323,7 +318,7 @@ class KubernetesCargoLoadOverviewPrinter:
         return tuple(elements)
 
     def _humanize_bytes(self, bytes_, precision=1):  # pylint: disable=no-self-use
-        if self._cpu:
+        if self._show_cpu_usage:
             bytes_ = bytes_ * 1000
             return "{:.0f} m".format(bytes_)
 
@@ -378,7 +373,7 @@ def _setup_options():
     argument_parser.add_argument(
         '-c',
         '--cpu',
-        dest='cpu',
+        dest='show_cpu_usage',
         action='store_true',
         help='show cpu instead of memory',
         default=False)
@@ -439,10 +434,10 @@ def main():
     namespace = None if options.all_namespaces else options.namespace
 
     try:
-        overview_provider = KubernetesCargoLoadOverviewProvider(namespace, options.context, options.cpu)
+        overview_provider = KubernetesCargoLoadOverviewProvider(namespace, options.context, options.show_cpu_usage)
         overview = overview_provider.provide()
 
-        printer = KubernetesCargoLoadOverviewPrinter(overview, options.no_header, options.sort, options.cpu)
+        printer = KubernetesCargoLoadOverviewPrinter(overview, options.no_header, options.sort, options.show_cpu_usage)
         printer.print()
     except Exception as exc:  # pylint: disable=broad-except
         if options.debug:
