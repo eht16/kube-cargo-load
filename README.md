@@ -7,14 +7,14 @@ kube-cargo-load
 
 
 List Kubernetes PODs of a specific namespace or all namespaces with their
-configured memory requests, limits and the current memory usage.
+configured memory or cpu requests, limits and the current memory or cpu usage.
 
 
 Features
 --------
 
-  * Overview of PODs and their memory requests, limits and actual usage
-  * Provides an easy inspection of the cluster utilization in terms of memory
+  * Overview of PODs and their memory or cpu requests, limits and actual usage
+  * Provides an easy inspection of the cluster utilization in terms of memory or cpu
   * Uses `kubectl` under the hood and reuses its config
   * Supports --namespace and --all-namespaces command line arguments
   * Supports --context command line argument
@@ -86,6 +86,7 @@ Command line options
     optional arguments:
       -h, --help            show this help message and exit
       -A, --all-namespaces  list the requested object(s) across all namespaces (default: False)
+      -c, --cpu             show cpu instead of memory (default: False)
       --context CONTEXT     the name of the kubeconfig context to use (default: None)
       -d, --debug           enable tracebacks (default: False)
       -n NAMESPACE, --namespace NAMESPACE
