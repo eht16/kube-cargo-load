@@ -327,7 +327,12 @@ class KubernetesCargoLoadOverviewPrinter:
         while bytes_ >= 1024:
             suffix_index += 1
             bytes_ = bytes_ / Decimal(1024)
-        return "{:.{precision}f} {:>2}".format(bytes_, suffixes[suffix_index], precision=precision)
+
+        bytes_rounded = round(bytes_, precision)
+        return "{:.{precision}f} {:>2}".format(
+            bytes_rounded,
+            suffixes[suffix_index],
+            precision=precision)
 
     def _get_memory_usage_ratio_formatted(self, maximum=None, use=None):
         ratio = self._get_memory_usage_ratio(maximum, use)
