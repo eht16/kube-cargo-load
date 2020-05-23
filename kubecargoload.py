@@ -6,7 +6,7 @@
 
 """
 List PODs of a specific namespace or all namespaces with their
-configured memory requests, limits and the current memory usage.
+configured memory or cpu requests, limits and the current or cpu memory usage.
 """
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
