@@ -154,7 +154,7 @@ class KubernetesCargoLoadOverviewProvider:
             container_value = self._get_nested_pod_data_attribute(
                 'resources',
                 key,
-                'memory' if self._show_cpu_usage == False else 'cpu',
+                'cpu' if self._show_cpu_usage else 'memory',
                 pod_data=container)
             if container_value is not None:
                 container_value_bytes = self._parse_quantity(container_value)
@@ -163,7 +163,8 @@ class KubernetesCargoLoadOverviewProvider:
         return value
 
     def _parse_quantity(self, quantity):  # pylint: disable=too-complex,no-self-use
-        # Taken from https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
+        # Taken from
+        # https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
         """
         Parse kubernetes canonical form quantity like 200Mi to a decimal number.
         Supported SI suffixes:
@@ -222,7 +223,8 @@ class KubernetesCargoLoadOverviewProvider:
 
 class KubernetesCargoLoadOverviewPrinter:
 
-    _format_pattern = '{:{w_namespace}} {:{w_name}} {:>{w_requests}} {:>{w_limits}} {:>{w_usage}} {:>{w_ratio}}'
+    _format_pattern = \
+        '{:{w_namespace}} {:{w_name}} {:>{w_requests}} {:>{w_limits}} {:>{w_usage}} {:>{w_ratio}}'
 
     def __init__(self, overview, no_header=False, sort='namespace,name', show_cpu_usage=False):
         self._overview = overview
@@ -318,7 +320,7 @@ class KubernetesCargoLoadOverviewPrinter:
 
         return tuple(elements)
 
-    def _humanize_bytes(self, bytes_, precision=1):  # pylint: disable=no-self-use
+    def _humanize_bytes(self, bytes_, precision=1):
         if self._show_cpu_usage:
             bytes_ = bytes_ * 1000
             return "{:.0f} m".format(bytes_)
@@ -440,10 +442,17 @@ def main():
     namespace = None if options.all_namespaces else options.namespace
 
     try:
-        overview_provider = KubernetesCargoLoadOverviewProvider(namespace, options.context, options.show_cpu_usage)
+        overview_provider = KubernetesCargoLoadOverviewProvider(
+            namespace,
+            options.context,
+            options.show_cpu_usage)
         overview = overview_provider.provide()
 
-        printer = KubernetesCargoLoadOverviewPrinter(overview, options.no_header, options.sort, options.show_cpu_usage)
+        printer = KubernetesCargoLoadOverviewPrinter(
+            overview,
+            options.no_header,
+            options.sort,
+            options.show_cpu_usage)
         printer.print()
     except Exception as exc:  # pylint: disable=broad-except
         if options.debug:
