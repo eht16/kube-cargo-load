@@ -102,18 +102,19 @@ class KubernetesCargoLoadOverviewProvider:
         return self._execute_kubectl('get', 'pods', '-o', 'json')
 
     def _pod_is_job(self):
-        labels = self._get_nested_pod_data_attribute('metadata', 'labels')
+        labels = self._get_nested_pod_data_attribute('metadata', 'labels', default=list())
         got_job_label = 'job-name' in labels
-
-        owner_references = self._get_nested_pod_data_attribute(
-            'metadata',
-            'ownerReferences',
-            default=list())
         got_owner_job = False
-        for owner_reference in owner_references:
-            if 'kind' in owner_reference and owner_reference['kind'] == 'Job':
-                got_owner_job = True
-                break
+
+        if got_job_label:
+            owner_references = self._get_nested_pod_data_attribute(
+                'metadata',
+                'ownerReferences',
+                default=list())
+            for owner_reference in owner_references:
+                if 'kind' in owner_reference and owner_reference['kind'] == 'Job':
+                    got_owner_job = True
+                    break
 
         return bool(got_job_label and got_owner_job)
 
