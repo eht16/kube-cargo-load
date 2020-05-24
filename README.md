@@ -16,8 +16,8 @@ Features
   * Overview of PODs and their memory or cpu requests, limits and actual usage
   * Provides an easy inspection of the cluster utilization in terms of memory or cpu
   * Uses `kubectl` under the hood and reuses its config
-  * Supports --namespace and --all-namespaces command line arguments
-  * Supports --context command line argument
+  * Supports `--namespace` and `--all-namespaces` command line arguments
+  * Supports `--context` command line argument
     filters and column setup
 
 Example:
@@ -104,6 +104,12 @@ The source code is available at https://github.com/eht16/kube-cargo-load/.
 
 ChangeLog
 ---------
+
+### 1.2 / 2020-05-24
+
+    * Add support for -c/--cpu flag (#3, Kurounin)
+    * Round humanized usage values to have more accurate numbers
+    * Add unit tests
 
 ### 1.1 / 2020-04-15
 

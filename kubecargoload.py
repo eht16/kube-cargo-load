@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 
-VERSION = '1.1'
+VERSION = '1.2'
 KUBECTL_BIN = 'kubectl'
 
 Pod = namedtuple('Pod', ('namespace', 'name', 'memory_limits', 'memory_requests', 'memory_usage'))
