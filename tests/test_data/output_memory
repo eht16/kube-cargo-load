@@ -1,0 +1,18 @@
+Namespace   Name                                          Requests       Limits        Usage            %
+----------------------------------------------------------------------------------------------------------
+default     kube-web-view-7c67ddb647-pvjvs                100.0 Mi     100.0 Mi      34.0 Mi      34.00 %
+jitsi       jitsi-57d5888c88-vzrzl                          0.0  B       0.0  B     209.0 Mi       0.00 %
+kube-system coredns-66bff467f8-qn4pq                       70.0 Mi     170.0 Mi       8.0 Mi       4.71 %
+kube-system coredns-66bff467f8-znpxv                       70.0 Mi     170.0 Mi      16.0 Mi       9.41 %
+kube-system etcd-minikube                                   0.0  B       0.0  B      65.0 Mi       0.00 %
+kube-system ingress-nginx-controller-7bb4c67d67-pzdpv      90.0 Mi       0.0  B       0.0  B       0.00 %
+kube-system kindnet-ptgnz                                  50.0 Mi      50.0 Mi      12.0 Mi      24.00 %
+kube-system kube-apiserver-minikube                         0.0  B       0.0  B     257.0 Mi       0.00 %
+kube-system kube-controller-manager-minikube                0.0  B       0.0  B      52.0 Mi       0.00 %
+kube-system kube-proxy-q6shl                                0.0  B       0.0  B      16.0 Mi       0.00 %
+kube-system kube-scheduler-minikube                         0.0  B       0.0  B      22.0 Mi       0.00 %
+kube-system metrics-server-67b8f475f-mpfgk                  0.0  B       0.0  B      18.0 Mi       0.00 %
+kube-system nginx-ingress-controller-6d57c87cb9-tgwwm       0.0  B       0.0  B      67.0 Mi       0.00 %
+kube-system storage-provisioner                             0.0  B       0.0  B      22.0 Mi       0.00 %
+----------------------------------------------------------------------------------------------------------
+Summary     (PODs without configured limits ignored)      380.0 Mi     490.0 Mi      70.0 Mi      14.29 %

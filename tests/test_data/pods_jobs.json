@@ -1,0 +1,57 @@
+{
+  "description": "Stripped version of a pods.json for testing only job detection, so unnecessary fields are removed for simplicity.",
+  "items": [
+    {
+      "metadata": {
+        "labels": {
+          "job-name": "hello-1589543400"
+        },
+        "name": "job-with-label-with-owner-reference",
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "blockOwnerDeletion": true,
+            "controller": true,
+            "kind": "Job",
+            "name": "hello-1589543400",
+            "uid": "fab04c6a-dc33-4bfd-af58-959907805419"
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "labels": {
+          "controller-uid": "ce11cd00-d358-42b7-971b-c45ef00a14f1",
+          "job-name": "hello-1589543700"
+        },
+        "name": "job-with-label-without-owner-reference"
+      }
+    },
+    {
+      "metadata": {
+        "name": "job-without-label-with-owner-reference",
+        "ownerReferences": [
+          {
+            "kind": "Job"
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "labels": {
+          "application": "kube-web-view",
+          "pod-template-hash": "7c67ddb647"
+        },
+        "name": "job-without-label-without-owner-reference",
+        "ownerReferences": [
+          {
+            "kind": "ReplicaSet",
+            "name": "kube-web-view-7c67ddb647"
+          }
+        ]
+      }
+    }
+  ]
+}
