@@ -164,7 +164,8 @@ class KubernetesCargoLoadOverviewProvider:
 
         return value
 
-    def _parse_quantity(self, quantity):  # pylint: disable=too-complex,no-self-use
+    # pylint: disable=too-complex,no-self-use,raise-missing-from
+    def _parse_quantity(self, quantity):
         # Taken from
         # https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
         """
