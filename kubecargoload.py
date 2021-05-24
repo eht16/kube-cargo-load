@@ -150,6 +150,8 @@ class KubernetesCargoLoadOverviewProvider:
     def _get_resources(self, key):
         value = 0
         containers = self._get_nested_pod_data_attribute('spec', 'containers')
+        if not containers:
+            return 0  # PODs without containers are rare but can happen
         for container in containers:
             container_value = self._get_nested_pod_data_attribute(
                 'resources',
