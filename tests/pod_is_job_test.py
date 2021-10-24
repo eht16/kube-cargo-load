@@ -26,7 +26,7 @@ class PodIsJobTest(unittest.TestCase):
         super().setUp()
 
         filename = 'tests/test_data/pods_jobs.json'
-        with open(filename) as all_pod_data_f:
+        with open(filename, encoding='utf-8') as all_pod_data_f:
             all_pod_data = json.load(all_pod_data_f)
 
         self._pod_data_with_job = all_pod_data['items'][0]

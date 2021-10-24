@@ -23,7 +23,7 @@ class GetNestedPodDataAttributeTest(unittest.TestCase):
         super().setUp()
 
         filename = 'tests/test_data/pods.json'
-        with open(filename) as all_pod_data_f:
+        with open(filename, encoding='utf-8') as all_pod_data_f:
             all_pod_data = json.load(all_pod_data_f)
 
         self._pod_data = all_pod_data['items'][0]
@@ -92,7 +92,7 @@ class GetNestedPodDataAttributeTest(unittest.TestCase):
         provider = self._factor_provider()
         default = 'default-for-nonexistent-key'
         # test
-        with mock.patch.object(provider, '_pod_data', dict()):
+        with mock.patch.object(provider, '_pod_data', {}):
             result = provider._get_nested_pod_data_attribute(
                 'non-nonexistent-key', 'nested-non-nonexistent-key',
                 default=default)
@@ -104,11 +104,11 @@ class GetNestedPodDataAttributeTest(unittest.TestCase):
         provider = self._factor_provider()
         default = 'default-for-nonexistent-key'
         # test
-        with mock.patch.object(provider, '_pod_data', dict()):
+        with mock.patch.object(provider, '_pod_data', {}):
             result = provider._get_nested_pod_data_attribute(
                 'non-nonexistent-key', 'nested-non-nonexistent-key',
                 default=default,
-                pod_data=dict())
+                pod_data={})
         # check
         expected_result = default
         self.assertEqual(result, expected_result)

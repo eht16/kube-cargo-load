@@ -62,5 +62,5 @@ class FullOutputTest(unittest.TestCase):
 
     def _read_file_contents(self, filename):  # pylint: disable=no-self-use
         path = join('tests/test_data', filename)
-        with open(path) as file_h:
+        with open(path, encoding='utf-8') as file_h:
             return file_h.read()

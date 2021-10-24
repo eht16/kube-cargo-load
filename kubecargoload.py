@@ -30,8 +30,8 @@ class KubernetesCargoLoadOverviewProvider:
         self._namespace = namespace
         self._context = context
         self._show_cpu_usage = show_cpu_usage
-        self._pod_usage_data = dict()
-        self._pods = dict()
+        self._pod_usage_data = {}
+        self._pods = {}
         self._pod_data = None
 
     def provide(self):
@@ -102,7 +102,7 @@ class KubernetesCargoLoadOverviewProvider:
         return self._execute_kubectl('get', 'pods', '-o', 'json')
 
     def _pod_is_job(self):
-        labels = self._get_nested_pod_data_attribute('metadata', 'labels', default=list())
+        labels = self._get_nested_pod_data_attribute('metadata', 'labels', default=[])
         got_job_label = 'job-name' in labels
         got_owner_job = False
 
@@ -110,7 +110,7 @@ class KubernetesCargoLoadOverviewProvider:
             owner_references = self._get_nested_pod_data_attribute(
                 'metadata',
                 'ownerReferences',
-                default=list())
+                default=[])
             for owner_reference in owner_references:
                 if 'kind' in owner_reference and owner_reference['kind'] == 'Job':
                     got_owner_job = True
@@ -201,7 +201,7 @@ class KubernetesCargoLoadOverviewProvider:
         try:
             number = Decimal(number)  # pylint: disable=redefined-variable-type
         except InvalidOperation:
-            raise ValueError("Invalid number format: {}".format(number))
+            raise ValueError(f'Invalid number format: {number}')
 
         if suffix is None:
             return number
@@ -211,14 +211,14 @@ class KubernetesCargoLoadOverviewProvider:
         elif len(suffix) == 1:
             base = 1000
         else:
-            raise ValueError("{} has unknown suffix".format(quantity))
+            raise ValueError(f'{quantity} has unknown suffix')
 
         # handly SI inconsistency
         if suffix == "ki":
-            raise ValueError("{} has unknown suffix".format(quantity))
+            raise ValueError(f'{quantity} has unknown suffix')
 
         if suffix[0] not in exponents:
-            raise ValueError("{} has unknown suffix".format(quantity))
+            raise ValueError(f'{quantity} has unknown suffix')
 
         exponent = Decimal(exponents[suffix[0]])
         return number * (base ** exponent)
@@ -234,7 +234,7 @@ class KubernetesCargoLoadOverviewPrinter:
         self._no_header = no_header
         self._sort = sort
         self._show_cpu_usage = show_cpu_usage
-        self._column_widths = dict()
+        self._column_widths = {}
         self._pod = None
         self._sums = dict(memory_requests=0, memory_limits=0, memory_usage=0, memory_ratio=0)
 
@@ -301,7 +301,7 @@ class KubernetesCargoLoadOverviewPrinter:
                     **self._column_widths))
 
     def _get_sort_key_for_pod(self, pod):
-        elements = list()
+        elements = []
         for sort_key in self._sort.split(','):
             sort_key = sort_key.strip()
 
@@ -326,7 +326,7 @@ class KubernetesCargoLoadOverviewPrinter:
     def _humanize_bytes(self, bytes_, precision=1):
         if self._show_cpu_usage:
             bytes_ = bytes_ * 1000
-            return "{:.0f} m".format(bytes_)
+            return f'{bytes_:.0f} m'
 
         suffixes = ['B', 'Ki', 'Mi', 'Gi', 'Ti']
         suffix_index = 0
@@ -335,14 +335,11 @@ class KubernetesCargoLoadOverviewPrinter:
             bytes_ = bytes_ / Decimal(1024)
 
         bytes_rounded = round(bytes_, precision)
-        return "{:.{precision}f} {:>2}".format(
-            bytes_rounded,
-            suffixes[suffix_index],
-            precision=precision)
+        return f'{bytes_rounded:.{precision}f} {suffixes[suffix_index]:>2}'
 
     def _get_memory_usage_ratio_formatted(self, maximum=None, use=None):
         ratio = self._get_memory_usage_ratio(maximum, use)
-        return '{:.2f} %'.format(ratio)
+        return f'{ratio:.2f} %'
 
     def _get_memory_usage_ratio(self, maximum=None, use=None):
         if maximum is None:
@@ -439,7 +436,7 @@ def _setup_options():
 def main():
     options = _setup_options()
     if options.version:
-        print('{} {}'.format(basename(__file__), VERSION))
+        print(f'{basename(__file__)} {VERSION}')
         sys.exit(0)
 
     namespace = None if options.all_namespaces else options.namespace
