@@ -1,6 +1,7 @@
 kube-cargo-load
 ===============
 
+[![CI Tests](https://github.com/eht16/kube-cargo-load/actions/workflows/tests.yml/badge.svg)](https://github.com/eht16/kube-cargo-load/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/kube-cargo-load.svg)](https://pypi.org/project/kube-cargo-load/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/kube-cargo-load.svg)](https://pypi.org/project/kube-cargo-load/)
 [![License](https://img.shields.io/pypi/l/kube-cargo-load.svg)](https://pypi.org/project/kube-cargo-load/)
