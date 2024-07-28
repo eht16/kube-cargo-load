@@ -15,10 +15,10 @@ on:
 jobs:
   test:
     name: Python ${{ matrix.python }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
       fail-fast: false
 
     steps:
@@ -34,6 +34,12 @@ jobs:
 
       - name: Install Tox
         run: pip install tox
+
+      - name: Install Bython
+        run: pip install bython
+
+      - name: Compile kubecargoload
+        run: bython --compile kubecargoload.by
 
       - name: Run tests
         run: tox -e py

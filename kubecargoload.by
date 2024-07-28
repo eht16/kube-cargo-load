@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding utf-8 -*-
 #
 # This software may be modified and distributed under the terms
 # of the Apache License, Version 2.0 license.  See the LICENSE file for details.
@@ -24,101 +24,122 @@ KUBECTL_BIN = 'kubectl'
 Pod = namedtuple('Pod', ('namespace', 'name', 'memory_limits', 'memory_requests', 'memory_usage'))
 
 
-class KubernetesCargoLoadOverviewProvider:
-
-    def __init__(self, namespace, context=None, show_cpu_usage=False):
+class KubernetesCargoLoadOverviewProvider {
+    def __init__(self, namespace, context=None, show_cpu_usage=False) {
         self._namespace = namespace
         self._context = context
         self._show_cpu_usage = show_cpu_usage
-        self._pod_usage_data = {}
-        self._pods = {}
+        self._pod_usage_data = dict()
+        self._pods = dict()
         self._pod_data = None
+    }
 
-    def provide(self):
+    def provide(self) {
         self._fetch_pod_memory_usage()
         self._fetch_pod_data()
 
         return self._pods
+    }
 
-    def _fetch_pod_memory_usage(self):
+    def _fetch_pod_memory_usage(self) {
         top_pods_output = self._execute_kubectl_top_pods()
-        for line in top_pods_output.splitlines():
+        for line in top_pods_output.splitlines() {
             columns = line.strip().split()
-            if len(columns) > 3:
+            if len(columns) > 3 {
                 namespace, name, cpu_usage_pretty, memory_usage_pretty = columns
-            else:
+            }
+            else {
                 name, cpu_usage_pretty, memory_usage_pretty = columns
                 namespace = self._namespace
+            }
 
             usage_pretty = cpu_usage_pretty if self._show_cpu_usage else memory_usage_pretty
             usage = self._parse_quantity(usage_pretty)
 
             pod_key = (namespace, name)
             self._pod_usage_data[pod_key] = usage
+        }
 
-    def _execute_kubectl_top_pods(self):
+    }
+    def _execute_kubectl_top_pods(self) {
         return self._execute_kubectl('top', 'pods', '--no-headers=true')
+    }
 
-    def _execute_kubectl(self, *arguments):
+    def _execute_kubectl(self, *arguments) {
         command = [KUBECTL_BIN]
         command.extend(arguments)
 
         # context
-        if self._context is not None:
+        if self._context is not None {
             command.append('--context')
             command.append(self._context)
 
         # namespace
-        if self._namespace is None:
+        }
+        if self._namespace is None {
             command.append('--all-namespaces')
-        else:
+        }
+        else {
             command.append('--namespace')
             command.append(self._namespace)
+        }
 
-        try:
+        try {
             process = subprocess.run(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 check=True)
-        except subprocess.CalledProcessError as exc:
+        }
+        except subprocess.CalledProcessError as exc {
             print(exc.stderr.decode('utf-8'))
             raise
-        else:
+        }
+        else {
             return process.stdout.decode('utf-8')
+        }
 
-    def _fetch_pod_data(self):
+    }
+    def _fetch_pod_data(self) {
         get_pods_output = self._execute_kubectl_get_pods()
         pods_data = json.loads(get_pods_output)
-        for self._pod_data in pods_data['items']:
-            if self._pod_is_job():
+        for self._pod_data in pods_data['items'] {
+            if self._pod_is_job() {
                 continue  # do not consider (cron) jobs
+            }
 
             pod = self._factor_pod()
             pod_key = (pod.namespace, pod.name)
             self._pods[pod_key] = (pod)
+        }
 
-    def _execute_kubectl_get_pods(self):
+    }
+    def _execute_kubectl_get_pods(self) {
         return self._execute_kubectl('get', 'pods', '-o', 'json')
+    }
 
-    def _pod_is_job(self):
+    def _pod_is_job(self) {
         labels = self._get_nested_pod_data_attribute('metadata', 'labels', default=[])
         got_job_label = 'job-name' in labels
         got_owner_job = False
 
-        if got_job_label:
+        if got_job_label {
             owner_references = self._get_nested_pod_data_attribute(
                 'metadata',
                 'ownerReferences',
                 default=[])
-            for owner_reference in owner_references:
-                if 'kind' in owner_reference and owner_reference['kind'] == 'Job':
+            for owner_reference in owner_references {
+                if 'kind' in owner_reference and owner_reference['kind'] == 'Job' {
                     got_owner_job = True
                     break
+                }
 
+            }
+        }
         return bool(got_job_label and got_owner_job)
+    }
 
-    def _factor_pod(self):
+    def _factor_pod(self) {
         namespace = self._get_nested_pod_data_attribute('metadata', 'namespace')
         name = self._get_nested_pod_data_attribute('metadata', 'name')
         memory_limits = self._get_resources('limits')
@@ -135,124 +156,148 @@ class KubernetesCargoLoadOverviewProvider:
             memory_usage=memory_usage)
 
         return pod
+    }
 
-    def _get_nested_pod_data_attribute(self, *keys, default=None, pod_data=None):
+    def _get_nested_pod_data_attribute(self, *keys, default=None, pod_data=None) {
         value = pod_data or self._pod_data
-        for key in keys:
-            if key in value:
+        for key in keys {
+            if key in value {
                 value = value[key]
-            else:
+            }
+            else {
                 value = default
                 break
+            }
 
+        }
         return value
+    }
 
-    def _get_resources(self, key):
+    def _get_resources(self, key) {
         value = 0
         containers = self._get_nested_pod_data_attribute('spec', 'containers')
-        if not containers:
+        if not containers {
             return 0  # PODs without containers are rare but can happen
-        for container in containers:
+        }
+        for container in containers {
             container_value = self._get_nested_pod_data_attribute(
                 'resources',
                 key,
                 'cpu' if self._show_cpu_usage else 'memory',
                 pod_data=container)
-            if container_value is not None:
+            if container_value is not None {
                 container_value_bytes = self._parse_quantity(container_value)
                 value += container_value_bytes
+            }
 
+        }
         return value
 
-    # pylint: disable=too-complex,no-self-use,raise-missing-from
-    def _parse_quantity(self, quantity):
+    # pylint disable=too-complex,no-self-use,raise-missing-from
+    }
+    def _parse_quantity(self, quantity) {
         # Taken from
-        # https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
+        # https//github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
         """
         Parse kubernetes canonical form quantity like 200Mi to a decimal number.
-        Supported SI suffixes:
-        base1024: Ki | Mi | Gi | Ti | Pi | Ei
-        base1000: n | u | m | "" | k | M | G | T | P | E
-        See https://github.com/kubernetes/apimachinery/blob/master/pkg/api/resource/quantity.go
-        Input:
-        quantity: string. kubernetes canonical form quantity
-        Returns:
+        Supported SI suffixes
+        base1024 Ki | Mi | Gi | Ti | Pi | Ei
+        base1000 n | u | m | "" | k | M | G | T | P | E
+        See https//github.com/kubernetes/apimachinery/blob/master/pkg/api/resource/quantity.go
+        Input
+        quantity string. kubernetes canonical form quantity
+        Returns
         Decimal
-        Raises:
+        Raises
         ValueError on invalid or unknown input
         """
-        if isinstance(quantity, (int, float, Decimal)):
+        if isinstance(quantity, (int, float, Decimal)) {
             return Decimal(quantity)
+        }
 
-        exponents = {"n": -3, "u": -2, "m": -1, "K": 1, "k": 1, "M": 2,
-                     "G": 3, "T": 4, "P": 5, "E": 6}
+        exponents = dict([("n", -3), ("u", -2), ("m", -1), ("K", 1), ("k", 1), ("M", 2), ("G", 3), ("T", 4), ("P", 5), ("E", 6)])
 
         quantity = str(quantity)
         number = quantity
         suffix = None
-        if len(quantity) >= 2 and quantity[-1] == "i":
-            if quantity[-2] in exponents:
-                number = quantity[:-2]
-                suffix = quantity[-2:]
-        elif len(quantity) >= 1 and quantity[-1] in exponents:
-            number = quantity[:-1]
-            suffix = quantity[-1:]
+        if len(quantity) >= 2 and quantity[-1] == "i" {
+            if quantity[-2] in exponents {
+                number = quantity[-2]
+                suffix = quantity[-2]
+            }
+        }
+        else if len(quantity) >= 1 and quantity[-1] in exponents {
+            number = quantity[-1]
+            suffix = quantity[-1]
+        }
 
-        try:
-            number = Decimal(number)  # pylint: disable=redefined-variable-type
-        except InvalidOperation:
-            raise ValueError(f'Invalid number format: {number}')
+        try {
+            number = Decimal(number)  # pylint disable=redefined-variable-type
+        }
+        except InvalidOperation {
+            raise ValueError(f'Invalid number format ' + number)
+        }
 
-        if suffix is None:
+        if suffix is None {
             return number
+        }
 
-        if suffix.endswith("i"):
+        if suffix.endswith("i") {
             base = 1024
-        elif len(suffix) == 1:
+        }
+        else if len(suffix) == 1 {
             base = 1000
-        else:
-            raise ValueError(f'{quantity} has unknown suffix')
+        }
+        else {
+            raise ValueError(quantity + ' has unknown suffix')
 
         # handly SI inconsistency
-        if suffix == "ki":
-            raise ValueError(f'{quantity} has unknown suffix')
+        }
+        if suffix == "ki" {
+            raise ValueError(quantity + ' has unknown suffix')
+        }
 
-        if suffix[0] not in exponents:
-            raise ValueError(f'{quantity} has unknown suffix')
+        if suffix[0] not in exponents {
+            raise ValueError(quantity + ' has unknown suffix')
+        }
 
         exponent = Decimal(exponents[suffix[0]])
         return number * (base ** exponent)
+    }
 
+}
 
-class KubernetesCargoLoadOverviewPrinter:
-
+class KubernetesCargoLoadOverviewPrinter {
     _format_pattern = \
-        '{:{w_namespace}} {:{w_name}} {:>{w_requests}} {:>{w_limits}} {:>{w_usage}} {:>{w_ratio}}'
+        '{{w_namespace}} {{w_name}} {>{w_requests}} {>{w_limits}} {>{w_usage}} {>{w_ratio}}'
 
-    def __init__(self, overview, no_header=False, sort='namespace,name', show_cpu_usage=False):
+    def __init__(self, overview, no_header=False, sort='namespace,name', show_cpu_usage=False) {
         self._overview = overview
         self._no_header = no_header
         self._sort = sort
         self._show_cpu_usage = show_cpu_usage
-        self._column_widths = {}
+        self._column_widths = dict()
         self._pod = None
         self._sums = dict(memory_requests=0, memory_limits=0, memory_usage=0, memory_ratio=0)
+    }
 
-    def print(self):
+    def print(self) {
         self._determine_maximum_column_widths()
         self._print_header()
         self._print_separator()
         self._print_pod_data()
         self._print_separator()
         self._print_summary()
+    }
 
-    def _determine_maximum_column_widths(self):
+    def _determine_maximum_column_widths(self) {
         max_namespace = 0
         max_name = 40
-        for pod in self._overview.values():
+        for pod in self._overview.values() {
             max_namespace = max(max_namespace, len(pod.namespace))
             max_name = max(max_name, len(pod.name))
         # consider column names as well
+        }
         max_namespace = max(max_namespace, len('Namespace'))
         max_name = max(max_name, len('Name'))
 
@@ -262,10 +307,12 @@ class KubernetesCargoLoadOverviewPrinter:
         self._column_widths['w_limits'] = 12
         self._column_widths['w_usage'] = 12
         self._column_widths['w_ratio'] = 12
+    }
 
-    def _print_header(self):
-        if self._no_header:
+    def _print_header(self) {
+        if self._no_header {
             return
+        }
 
         print(self._format_pattern.format(
             'Namespace',
@@ -275,20 +322,24 @@ class KubernetesCargoLoadOverviewPrinter:
             'Usage',
             '%',
             **self._column_widths))
+    }
 
-    def _print_separator(self):
-        if self._no_header:
+    def _print_separator(self) {
+        if self._no_header {
             return
+        }
 
         print('-' * (sum(self._column_widths.values()) + len(self._column_widths)))
+    }
 
-    def _print_pod_data(self):
+    def _print_pod_data(self) {
         pods_sorted = sorted(self._overview.values(), key=self._get_sort_key_for_pod)
-        for self._pod in pods_sorted:
+        for self._pod in pods_sorted {
             self._sums['memory_requests'] += self._pod.memory_requests
-            if self._pod.memory_limits:  # consider usage for summary only if limit is set
+            if self._pod.memory_limits {  # consider usage for summary only if limit is set
                 self._sums['memory_limits'] += self._pod.memory_limits
                 self._sums['memory_usage'] += self._pod.memory_usage
+            }
 
             print(
                 self._format_pattern.format(
@@ -299,61 +350,81 @@ class KubernetesCargoLoadOverviewPrinter:
                     self._humanize_bytes(self._pod.memory_usage),
                     self._get_memory_usage_ratio_formatted(),
                     **self._column_widths))
+        }
 
-    def _get_sort_key_for_pod(self, pod):
+    }
+    def _get_sort_key_for_pod(self, pod) {
         elements = []
-        for sort_key in self._sort.split(','):
+        for sort_key in self._sort.split(',') {
             sort_key = sort_key.strip()
 
-            if sort_key == 'name':
+            if sort_key == 'name' {
                 elements.append(pod.name)
-            elif sort_key == 'namespace':
+            }
+            else if sort_key == 'namespace' {
                 elements.append(pod.namespace)
-            elif sort_key == 'requests':
+            }
+            else if sort_key == 'requests' {
                 elements.append(pod.memory_requests)
-            elif sort_key == 'limits':
+            }
+            else if sort_key == 'limits' {
                 elements.append(pod.memory_limits)
-            elif sort_key == 'usage':
+            }
+            else if sort_key == 'usage' {
                 elements.append(pod.memory_usage)
-            elif sort_key == 'ratio':
+            }
+            else if sort_key == 'ratio' {
                 ratio = self._get_memory_usage_ratio(pod.memory_limits, pod.memory_usage)
                 elements.append(ratio)
-            else:
-                raise ValueError(f'Unsupported sort key: {sort_key}')
+            }
+            else {
+                raise ValueError('Unsupported sort key' + sort_key)
+            }
 
+        }
         return tuple(elements)
+    }
 
-    def _humanize_bytes(self, bytes_, precision=1):
-        if self._show_cpu_usage:
+    def _humanize_bytes(self, bytes_, precision=1) {
+        if self._show_cpu_usage {
             bytes_ = bytes_ * 1000
-            return f'{bytes_:.0f} m'
+            return f'{bytes_.0f} m'
+        }
 
         suffixes = ['B', 'Ki', 'Mi', 'Gi', 'Ti']
         suffix_index = 0
-        while bytes_ >= 1024:
+        while bytes_ >= 1024 {
             suffix_index += 1
             bytes_ = bytes_ / Decimal(1024)
+        }
 
         bytes_rounded = round(bytes_, precision)
-        return f'{bytes_rounded:.{precision}f} {suffixes[suffix_index]:>2}'
+        return ''.format(bytes_rounded, precision, suffixes[suffix_index] > 2)
+    }
 
-    def _get_memory_usage_ratio_formatted(self, maximum=None, use=None):
+    def _get_memory_usage_ratio_formatted(self, maximum=None, use=None) {
         ratio = self._get_memory_usage_ratio(maximum, use)
-        return f'{ratio:.2f} %'
-
-    def _get_memory_usage_ratio(self, maximum=None, use=None):
-        if maximum is None:
-            maximum = self._pod.memory_limits
-        if use is None:
-            use = self._pod.memory_usage
-
-        if not maximum:
-            ratio = 0
-        else:
-            ratio = (use * 100) / maximum
         return ratio
+    }
 
-    def _print_summary(self):
+    def _get_memory_usage_ratio(self, maximum=None, use=None) {
+        if maximum is None {
+            maximum = self._pod.memory_limits
+        }
+        if use is None {
+            use = self._pod.memory_usage
+        }
+
+        if not maximum {
+            ratio = 0
+        }
+        else {
+            ratio = (use * 100) / maximum
+        }
+        return ratio
+    }
+
+    def _print_summary(self) {
         print(self._format_pattern.format(
             'Summary',
             '(PODs without configured limits ignored)',
@@ -364,9 +435,11 @@ class KubernetesCargoLoadOverviewPrinter:
                 self._sums['memory_limits'],
                 self._sums['memory_usage']),
             **self._column_widths))
+    }
 
+}
 
-def _setup_options():
+def _setup_options() {
     argument_parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     namespace_group = argument_parser.add_mutually_exclusive_group()
 
@@ -419,7 +492,7 @@ def _setup_options():
         '--sort',
         dest='sort',
         help='sort by column(s), to sort by multiple columns seperate them with comma. '
-             'Valid options: namespace,name,requests,limits,usage,ratio',
+             'Valid options namespace,name,requests,limits,usage,ratio',
         default='namespace,name')
 
     argument_parser.add_argument(
@@ -431,17 +504,19 @@ def _setup_options():
         default=False)
 
     return argument_parser.parse_args()
+}
 
 
-def main():
+def main() {
     options = _setup_options()
-    if options.version:
-        print(f'{basename(__file__)} {VERSION}')
+    if options.version {
+        print(basename(__file__) + ' ' + VERSION)
         sys.exit(0)
+    }
 
     namespace = None if options.all_namespaces else options.namespace
 
-    try:
+    try {
         overview_provider = KubernetesCargoLoadOverviewProvider(
             namespace,
             options.context,
@@ -454,13 +529,18 @@ def main():
             options.sort,
             options.show_cpu_usage)
         printer.print()
-    except Exception as exc:  # pylint: disable=broad-except
-        if options.debug:
+    }
+    except Exception as exc {  # pylint disable=broad-except
+        if options.debug {
             raise
+        }
 
         print(exc, file=sys.stderr)
         sys.exit(1)
+    }
 
+}
 
-if __name__ == '__main__':
+if __name__ == '__main__' {
     main()
+}

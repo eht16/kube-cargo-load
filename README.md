@@ -103,6 +103,25 @@ Get the Source
 The source code is available at https://github.com/eht16/kube-cargo-load/.
 
 
+Development
+-----------
+
+### Setup
+
+This project choose to use [bython](https://github.com/mathialo/bython/blob/master/INTRODUCTION.md) instead of python to provide more readability. Please make yourself familiar with the bython syntax.
+You can quickly install it via [pipx](https://github.com/pypa/pipx): `pipx install bython`.  
+
+### Running/Building
+
+Run your code with bython like with python: `bython kubecargoload.by`.  
+You can also compile it, with following command: `bython --compile kubecargoload.by`.  
+
+### Tests
+
+In order to run the unit tests, please first compile `bython --compile kubecargoload.by`.  
+Then just execute: `tox -e py`.  
+
+
 ChangeLog
 ---------
 
