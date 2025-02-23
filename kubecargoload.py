@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # This software may be modified and distributed under the terms
 # of the Apache License, Version 2.0 license.  See the LICENSE file for details.
@@ -10,9 +9,9 @@ configured memory or cpu requests, limits and the current or cpu memory usage.
 """
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
-from collections import namedtuple
 from decimal import Decimal, InvalidOperation
 from os.path import basename
+from typing import NamedTuple
 import json
 import subprocess
 import sys
@@ -21,7 +20,15 @@ import sys
 VERSION = '1.2'
 KUBECTL_BIN = 'kubectl'
 
-Pod = namedtuple('Pod', ('namespace', 'name', 'memory_limits', 'memory_requests', 'memory_usage'))
+# ruff: noqa: T201
+
+
+class Pod(NamedTuple):
+    namespace: str
+    name: str
+    memory_limits: int
+    memory_requests: int
+    memory_usage: Decimal
 
 
 class KubernetesCargoLoadOverviewProvider:
@@ -76,16 +83,15 @@ class KubernetesCargoLoadOverviewProvider:
             command.append(self._namespace)
 
         try:
-            process = subprocess.run(
+            process = subprocess.run(  # noqa: S603
                 command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 check=True)
         except subprocess.CalledProcessError as exc:
             print(exc.stderr.decode('utf-8'))
             raise
-        else:
-            return process.stdout.decode('utf-8')
+
+        return process.stdout.decode('utf-8')
 
     def _fetch_pod_data(self):
         get_pods_output = self._execute_kubectl_get_pods()
@@ -96,7 +102,7 @@ class KubernetesCargoLoadOverviewProvider:
 
             pod = self._factor_pod()
             pod_key = (pod.namespace, pod.name)
-            self._pods[pod_key] = (pod)
+            self._pods[pod_key] = pod
 
     def _execute_kubectl_get_pods(self):
         return self._execute_kubectl('get', 'pods', '-o', 'json')
@@ -165,7 +171,7 @@ class KubernetesCargoLoadOverviewProvider:
         return value
 
     # pylint: disable=too-complex,no-self-use,raise-missing-from
-    def _parse_quantity(self, quantity):
+    def _parse_quantity(self, quantity):  # noqa: C901
         # Taken from
         # https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/quantity.py
         """
@@ -184,13 +190,13 @@ class KubernetesCargoLoadOverviewProvider:
         if isinstance(quantity, (int, float, Decimal)):
             return Decimal(quantity)
 
-        exponents = {"n": -3, "u": -2, "m": -1, "K": 1, "k": 1, "M": 2,
-                     "G": 3, "T": 4, "P": 5, "E": 6}
+        exponents = {'n': -3, 'u': -2, 'm': -1, 'K': 1, 'k': 1, 'M': 2,
+                     'G': 3, 'T': 4, 'P': 5, 'E': 6}
 
         quantity = str(quantity)
         number = quantity
         suffix = None
-        if len(quantity) >= 2 and quantity[-1] == "i":
+        if len(quantity) >= 2 and quantity[-1] == 'i':
             if quantity[-2] in exponents:
                 number = quantity[:-2]
                 suffix = quantity[-2:]
@@ -200,25 +206,29 @@ class KubernetesCargoLoadOverviewProvider:
 
         try:
             number = Decimal(number)  # pylint: disable=redefined-variable-type
-        except InvalidOperation:
-            raise ValueError(f'Invalid number format: {number}')
+        except InvalidOperation as exc:
+            msg = f'Invalid number format: {number}'
+            raise ValueError(msg) from exc
 
         if suffix is None:
             return number
 
-        if suffix.endswith("i"):
+        if suffix.endswith('i'):
             base = 1024
         elif len(suffix) == 1:
             base = 1000
         else:
-            raise ValueError(f'{quantity} has unknown suffix')
+            msg = f'{quantity} has unknown suffix'
+            raise ValueError(msg)
 
         # handly SI inconsistency
-        if suffix == "ki":
-            raise ValueError(f'{quantity} has unknown suffix')
+        if suffix == 'ki':
+            msg = f'{quantity} has unknown suffix'
+            raise ValueError(msg)
 
         if suffix[0] not in exponents:
-            raise ValueError(f'{quantity} has unknown suffix')
+            msg = f'{quantity} has unknown suffix'
+            raise ValueError(msg)
 
         exponent = Decimal(exponents[suffix[0]])
         return number * (base ** exponent)
@@ -236,7 +246,12 @@ class KubernetesCargoLoadOverviewPrinter:
         self._show_cpu_usage = show_cpu_usage
         self._column_widths = {}
         self._pod = None
-        self._sums = dict(memory_requests=0, memory_limits=0, memory_usage=0, memory_ratio=0)
+        self._sums = {
+            'memory_requests': 0,
+            'memory_limits': 0,
+            'memory_usage': 0,
+            'memory_ratio': 0,
+        }
 
     def print(self):
         self._determine_maximum_column_widths()
@@ -302,8 +317,8 @@ class KubernetesCargoLoadOverviewPrinter:
 
     def _get_sort_key_for_pod(self, pod):
         elements = []
-        for sort_key in self._sort.split(','):
-            sort_key = sort_key.strip()
+        for sort_key_raw in self._sort.split(','):
+            sort_key = sort_key_raw.strip()
 
             if sort_key == 'name':
                 elements.append(pod.name)
@@ -319,7 +334,8 @@ class KubernetesCargoLoadOverviewPrinter:
                 ratio = self._get_memory_usage_ratio(pod.memory_limits, pod.memory_usage)
                 elements.append(ratio)
             else:
-                raise ValueError(f'Unsupported sort key: {sort_key}')
+                msg = f'Unsupported sort key: {sort_key}'
+                raise ValueError(msg)
 
         return tuple(elements)
 
@@ -347,10 +363,7 @@ class KubernetesCargoLoadOverviewPrinter:
         if use is None:
             use = self._pod.memory_usage
 
-        if not maximum:
-            ratio = 0
-        else:
-            ratio = (use * 100) / maximum
+        ratio = 0 if not maximum else (use * 100) / maximum
         return ratio
 
     def _print_summary(self):
